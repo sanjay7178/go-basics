@@ -1,8 +1,9 @@
-module grpc_test
+module github.com/sanjay7178/go-basics/grpc_test
 
 go 1.21.0
 
 require (
+	github.com/sirupsen/logrus v1.9.3
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )

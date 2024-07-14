@@ -4,7 +4,7 @@ package grpc_test;
 
 option go_package="github.com/sanjay7178/go-basics/grpc_test/grpc_test";
 
-service YourService {
+service Greeter {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
 }
 
