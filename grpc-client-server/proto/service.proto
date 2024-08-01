@@ -3,7 +3,6 @@ syntax = "proto3";
 option go_package = "github.com/sanjay7178/grpc_bidir";
 package grpc_bidir;
 
-
 service YourService {
     rpc RegisterClient(ClientInfo) returns (ClientResponse);
     rpc SendMessage(MessageRequest) returns (MessageResponse);
@@ -19,8 +18,9 @@ message ClientResponse {
 }
 
 message MessageRequest {
-    string client_id = 1;
-    string message = 2;
+    string sender_id = 1;
+    string recipient_id = 2;
+    string message = 3;
 }
 
 message MessageResponse {
@@ -32,5 +32,6 @@ message ReceiveRequest {
 }
 
 message Message {
-    string message = 1;
+    string sender_id = 1;
+    string message = 2;
 }

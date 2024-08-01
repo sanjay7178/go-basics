@@ -3,50 +3,80 @@ package main
 import (
     "context"
     "log"
-    "time"
+    "net"
+    "sync"
 
     pb "github.com/sanjay7178/go-basics/grpc-client-server/grpcbidir"
+
     "google.golang.org/grpc"
+    "google.golang.org/grpc/reflection"
 )
 
+type server struct {
+    pb.UnimplementedYourServiceServer
+    mu      sync.Mutex
+    clients map[string]chan *pb.Message
+}
+
+func newServer() *server {
+    return &server{
+        clients: make(map[string]chan *pb.Message),
+    }
+}
+
+func (s *server) RegisterClient(ctx context.Context, info *pb.ClientInfo) (*pb.ClientResponse, error) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+
+    if _, exists := s.clients[info.ClientId]; !exists {
+        s.clients[info.ClientId] = make(chan *pb.Message, 10)
+        log.Printf("Registered client with ID: %s", info.ClientId)
+    }
+
+    return &pb.ClientResponse{Message: "Client registered successfully"}, nil
+}
+
+func (s *server) SendMessage(ctx context.Context, req *pb.MessageRequest) (*pb.MessageResponse, error) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+
+    if ch, exists := s.clients[req.RecipientId]; exists {
+        ch <- &pb.Message{SenderId: req.SenderId, Message: req.Message}
+        return &pb.MessageResponse{Status: "Message sent successfully"}, nil
+    }
+
+    return &pb.MessageResponse{Status: "Recipient not found"}, nil
+}
+
+func (s *server) ReceiveMessages(req *pb.ReceiveRequest, stream pb.YourService_ReceiveMessagesServer) error {
+    s.mu.Lock()
+    ch, exists := s.clients[req.ClientId]
+    s.mu.Unlock()
+
+    if !exists {
+        return nil
+    }
+
+    for msg := range ch {
+        if err := stream.Send(msg); err != nil {
+            return err
+        }
+    }
+
+    return nil
+}
+
 func main() {
-    conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
+    lis, err := net.Listen("tcp", ":50051")
     if err != nil {
-        log.Fatalf("did not connect: %v", err)
-    }
-    defer conn.Close()
-
-    client := pb.NewYourServiceClient(conn)
-
-    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-    defer cancel()
-
-    clientID := "client1"
-    _, err = client.RegisterClient(ctx, &pb.ClientInfo{ClientId: clientID})
-    if err != nil {
-        log.Fatalf("could not register client: %v", err)
+        log.Fatalf("failed to listen: %v", err)
     }
 
-    go func() {
-        stream, err := client.ReceiveMessages(context.Background(), &pb.ReceiveRequest{ClientId: clientID})
-        if err != nil {
-            log.Fatalf("could not receive messages: %v", err)
-        }
+    s := grpc.NewServer()
+    pb.RegisterYourServiceServer(s, newServer())
+    reflection.Register(s)
 
-        for {
-            msg, err := stream.Recv()
-            if err != nil {
-                log.Fatalf("could not receive message: %v", err)
-            }
-            log.Printf("Received message: %s", msg.Message)
-        }
-    }()
-
-    _, err = client.SendMessage(ctx, &pb.MessageRequest{ClientId: clientID, Message: "Hello, server!"})
-    if err != nil {
-        log.Fatalf("could not send message: %v", err)
+    if err := s.Serve(lis); err != nil {
+        log.Fatalf("failed to serve: %v", err)
     }
-
-    // Keep the client running to receive messages
-    select {}
 }

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
-	"log"
-	"net"
-	"sync"
+    "context"
+    "log"
+    "net"
+    "sync"
 
-	pb "github.com/sanjay7178/go-basics/grpc-client-server/grpcbidir"
+    pb "github.com/sanjay7178/go-basics/grpc-client-server/grpcbidir"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/reflection"
 )
 
 type server struct {
@@ -40,12 +40,12 @@ func (s *server) SendMessage(ctx context.Context, req *pb.MessageRequest) (*pb.M
     s.mu.Lock()
     defer s.mu.Unlock()
 
-    if ch, exists := s.clients[req.ClientId]; exists {
-        ch <- &pb.Message{Message: req.Message}
+    if ch, exists := s.clients[req.RecipientId]; exists {
+        ch <- &pb.Message{SenderId: req.SenderId, Message: req.Message}
         return &pb.MessageResponse{Status: "Message sent successfully"}, nil
     }
 
-    return &pb.MessageResponse{Status: "Client not found"}, nil
+    return &pb.MessageResponse{Status: "Recipient not found"}, nil
 }
 
 func (s *server) ReceiveMessages(req *pb.ReceiveRequest, stream pb.YourService_ReceiveMessagesServer) error {
