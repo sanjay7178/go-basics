@@ -5,7 +5,7 @@ import (
     "log"
     "time"
 
-    pb "grpc-client-server/grpcbidir"
+    pb "github.com/sanjay7178/go-basics/grpc-client-server/grpcbidir"
     "google.golang.org/grpc"
 )
 

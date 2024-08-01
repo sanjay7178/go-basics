@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 
-	pb "grpc-client-server/grpcbidir"
+	pb "github.com/sanjay7178/go-basics/grpc-client-server/grpcbidir"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
