@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "github.com/sanjay7178/grpc_bidir";
+package grpc_bidir;
+
+
+service YourService {
+    rpc RegisterClient(ClientInfo) returns (ClientResponse);
+    rpc SendMessage(MessageRequest) returns (MessageResponse);
+    rpc ReceiveMessages(ReceiveRequest) returns (stream Message);
+}
+
+message ClientInfo {
+    string client_id = 1;
+}
+
+message ClientResponse {
+    string message = 1;
+}
+
+message MessageRequest {
+    string client_id = 1;
+    string message = 2;
+}
+
+message MessageResponse {
+    string status = 1;
+}
+
+message ReceiveRequest {
+    string client_id = 1;
+}
+
+message Message {
+    string message = 1;
+}

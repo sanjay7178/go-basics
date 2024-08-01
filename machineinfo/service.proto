@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="github.com/sanjay7178/go-basics/grpc_test/machineinfo";
+package machineinfo;
+
+service MachineInfoService {
+  rpc GetMachineInfo(MachineInfoRequest) returns (stream MachineInfoResponse);
+}
+
+message MachineInfoRequest {}
+
+message MachineInfoResponse {
+  string machineID = 1;
+  string username = 2;
+  string password = 3;
+  string status = 4;
+}
+
